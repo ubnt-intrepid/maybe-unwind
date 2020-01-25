@@ -88,6 +88,19 @@ pub struct UnwindContext {
     pub captured: Option<CapturedPanicInfo>,
 }
 
+pub fn maybe_unwind<F, R>(f: F) -> Result<R, UnwindContext>
+where
+    F: FnOnce() -> R + UnwindSafe,
+{
+    let mut captured = RefCell::new(None);
+    CAPTURED_PANIC_INFO
+        .set(&captured, || panic::catch_unwind(f))
+        .map_err(|cause| UnwindContext {
+            cause,
+            captured: captured.get_mut().take(),
+        })
+}
+
 pin_project! {
     #[derive(Debug)]
     #[must_use = "futures do nothing unless you `.await` or poll them"]
@@ -105,17 +118,7 @@ where
 
     fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> Poll<Self::Output> {
         let me = self.project();
-        let mut captured = RefCell::new(None);
-        let poll = CAPTURED_PANIC_INFO.set(&captured, || {
-            panic::catch_unwind(AssertUnwindSafe(|| me.inner.poll(cx)))
-        });
-        match poll {
-            Ok(poll) => poll.map(Ok),
-            Err(cause) => {
-                let captured = captured.get_mut().take();
-                Poll::Ready(Err(UnwindContext { cause, captured }))
-            }
-        }
+        maybe_unwind(AssertUnwindSafe(|| me.inner.poll(cx)))?.map(Ok)
     }
 }
 
