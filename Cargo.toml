@@ -9,5 +9,6 @@ edition = "2018"
 
 [dependencies]
 futures = "0.3"
+lazy_static = "1"
 pin-project-lite = "0.1"
 scoped-tls = "1"

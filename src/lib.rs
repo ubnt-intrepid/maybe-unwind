@@ -2,6 +2,7 @@ use futures::{
     future::Future,
     task::{self, Poll},
 };
+use lazy_static::lazy_static;
 use pin_project_lite::pin_project;
 use scoped_tls::scoped_thread_local;
 use std::{
@@ -9,39 +10,82 @@ use std::{
     cell::RefCell,
     panic::{self, AssertUnwindSafe, PanicInfo, UnwindSafe},
     pin::Pin,
+    sync::RwLock,
 };
 
-scoped_thread_local!(static ERROR_MSG: RefCell<Option<String>>);
+type PanicHook = dyn Fn(&PanicInfo) + Send + Sync + 'static;
+
+lazy_static! {
+    static ref OLD_HOOK: RwLock<Option<Box<PanicHook>>> = RwLock::new(None);
+}
+
+scoped_thread_local! {
+    static CAPTURED_PANIC_INFO: RefCell<Option<CapturedPanicInfo>>
+}
 
 #[inline]
-pub fn set_hook() -> Box<dyn Fn(&PanicInfo) + Send + Sync + 'static> {
-    let old_hook = panic::take_hook();
+pub fn set_hook() {
+    match OLD_HOOK.write() {
+        Ok(mut old_hook) => {
+            old_hook.get_or_insert_with(panic::take_hook);
+        }
+        Err(err) => panic!("{}", err),
+    }
     panic::set_hook(Box::new(maybe_unwind_panic_hook));
-    old_hook
+}
+
+#[inline]
+pub fn reset_hook() {
+    if let Ok(mut old_lock) = OLD_HOOK.write() {
+        if let Some(old_hook) = old_lock.take() {
+            panic::set_hook(old_hook);
+        }
+    }
 }
 
 fn maybe_unwind_panic_hook(info: &PanicInfo) {
-    if !ERROR_MSG.is_set() {
-        eprintln!("warning: This panic occured outside the capture range of MaybeUnwind.",);
-        eprintln!("warning: It is desirable to reset the panic handler to the default by using `std::panic::take_hook`, if this panic is intentional.");
-        eprintln!("warning: The original panic message is:");
-        eprintln!("{}", info);
+    if !CAPTURED_PANIC_INFO.is_set() {
+        fallback_hook(info);
         return;
     }
 
-    ERROR_MSG.with(|error_msg| match error_msg.try_borrow_mut() {
-        Ok(mut error_msg) => {
-            error_msg.replace(format!("{}", info));
+    CAPTURED_PANIC_INFO.with(|captured| match captured.try_borrow_mut() {
+        Ok(mut captured) => {
+            captured.replace(CapturedPanicInfo {
+                message: info.to_string(),
+                file: info.location().map(|loc| loc.file().to_string()),
+                line: info.location().map(|loc| loc.line()),
+                column: info.location().map(|loc| loc.column()),
+            });
         }
         Err(_) => eprintln!("bug"),
     })
+}
+
+fn fallback_hook(info: &PanicInfo) {
+    let old_hook = OLD_HOOK.read().ok();
+    let old_hook = old_hook.as_ref().and_then(|old_hook| old_hook.as_ref());
+    if let Some(old_hook) = old_hook {
+        (old_hook)(info);
+    } else {
+        eprintln!("warning: the original panic hook is not available (this is a bug).");
+    }
+}
+
+#[derive(Debug)]
+#[non_exhaustive]
+pub struct CapturedPanicInfo {
+    pub message: String,
+    pub file: Option<String>,
+    pub line: Option<u32>,
+    pub column: Option<u32>,
 }
 
 #[derive(Debug)]
 #[non_exhaustive]
 pub struct UnwindContext {
     pub cause: Box<dyn Any + Send + 'static>,
-    pub error_msg: Option<String>,
+    pub captured: Option<CapturedPanicInfo>,
 }
 
 pin_project! {
@@ -61,15 +105,15 @@ where
 
     fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> Poll<Self::Output> {
         let me = self.project();
-        let mut error_msg = RefCell::new(None);
-        let poll = ERROR_MSG.set(&error_msg, || {
+        let mut captured = RefCell::new(None);
+        let poll = CAPTURED_PANIC_INFO.set(&captured, || {
             panic::catch_unwind(AssertUnwindSafe(|| me.inner.poll(cx)))
         });
         match poll {
             Ok(poll) => poll.map(Ok),
             Err(cause) => {
-                let error_msg = error_msg.get_mut().take();
-                Poll::Ready(Err(UnwindContext { cause, error_msg }))
+                let captured = captured.get_mut().take();
+                Poll::Ready(Err(UnwindContext { cause, captured }))
             }
         }
     }
@@ -93,8 +137,9 @@ mod tests {
 
     #[allow(unreachable_code)]
     #[test]
+    #[should_panic(expected = "explicit panic")]
     fn smoke_test() {
-        let old_hook = set_hook();
+        set_hook();
 
         assert!(block_on(async { "foo" }.maybe_unwind()).is_ok());
 
@@ -107,9 +152,10 @@ mod tests {
         )
         .unwrap_err();
 
-        assert!(unwind.error_msg.map_or(false, |msg| msg.contains("bar")));
+        assert!(unwind
+            .captured
+            .map_or(false, |captured| captured.message.contains("bar")));
 
-        panic::set_hook(old_hook);
         panic!("explicit panic");
     }
 }
