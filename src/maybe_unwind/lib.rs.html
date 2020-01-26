@@ -220,9 +220,18 @@
 <span id="220">220</span>
 <span id="221">221</span>
 <span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">/*!
-A variant of [`catch_unwind`] that also captures the panic information.
+A wrapper of [`catch_unwind`] that also captures the panic information.
 
 The main purpose of this library is to provide a utility for capturing
 the error information from assetion macros in custom test libraries.
@@ -247,6 +256,10 @@ maybe_unwind::reset_hook();
 ```
 !*/</span>
 
+<span class="attribute">#![<span class="ident">doc</span>(<span class="ident">html_root_url</span> <span class="op">=</span> <span class="string">&quot;https://docs.rs/maybe-unwind/0.0.1&quot;</span>)]</span>
+<span class="attribute">#![<span class="ident">deny</span>(<span class="ident">missing_docs</span>)]</span>
+<span class="attribute">#![<span class="ident">forbid</span>(<span class="ident">clippy</span>::<span class="ident">todo</span>, <span class="ident">clippy</span>::<span class="ident">unimplemented</span>)]</span>
+<span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">deny</span>(<span class="ident">warnings</span>))]</span>
 <span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;nightly&quot;</span>, <span class="ident">feature</span>(<span class="ident">backtrace</span>))]</span>
 <span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;nightly&quot;</span>, <span class="ident">feature</span>(<span class="ident">doc_cfg</span>))]</span>
 
@@ -327,7 +340,7 @@ maybe_unwind::reset_hook();
                     <span class="kw">let</span> <span class="ident">payload</span> <span class="op">=</span> <span class="ident">info</span>.<span class="ident">payload</span>();
                     <span class="ident">payload</span>
                         .<span class="ident">downcast_ref</span>::<span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>()
-                        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">payload</span><span class="op">|</span> <span class="ident">payload</span>.<span class="ident">to_string</span>())
+                        .<span class="ident">map</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">payload</span><span class="op">|</span> <span class="ident">payload</span>.<span class="ident">to_string</span>())
                         .<span class="ident">or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">payload</span>.<span class="ident">downcast_ref</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>().<span class="ident">cloned</span>())
                 },
                 <span class="ident">message</span>: <span class="ident">info</span>.<span class="ident">to_string</span>(),
@@ -442,6 +455,11 @@ maybe_unwind::reset_hook();
         <span class="ident">cause</span>,
         <span class="ident">captured</span>: <span class="ident">captured</span>.<span class="ident">take</span>(),
     })
+}
+
+<span class="attribute">#[<span class="ident">test</span>]</span>
+<span class="kw">fn</span> <span class="ident">test_html_root_url</span>() {
+    <span class="ident">version_sync</span>::<span class="macro">assert_html_root_url_updated</span><span class="macro">!</span>(<span class="string">&quot;src/lib.rs&quot;</span>);
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "maybe_unwind";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
