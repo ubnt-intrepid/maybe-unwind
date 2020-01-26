@@ -1,7 +1,7 @@
 #![cfg(feature = "futures")]
 
-use maybe_unwind::FutureMaybeUnwindExt as _;
 use futures_executor::block_on;
+use maybe_unwind::FutureMaybeUnwindExt as _;
 use std::sync::Once;
 
 fn ensure_set_hook() {
