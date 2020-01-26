@@ -1,164 +1,181 @@
-use futures::{
-    future::Future,
-    task::{self, Poll},
-};
+/*!
+A variant of [`catch_unwind`] that also captures the panic information.
+
+The main purpose of this library is to provide a utility for capturing
+the error information from assetion macros in custom test libraries.
+
+[`catch_unwind`]: https://doc.rust-lang.org/stable/std/panic/fn.catch_unwind.html
+
+# Example
+
+```no_run
+use maybe_unwind::maybe_unwind;
+
+maybe_unwind::set_hook();
+
+let res: Result<_, maybe_unwind::UnwindContext> = maybe_unwind(|| do_something());
+if let Err(err) = res {
+    eprintln!("cause: {:?}", err.cause);
+    eprintln!("captured: {:?}", err.captured);
+}
+
+maybe_unwind::reset_hook();
+# fn do_something() {}
+```
+!*/
+
+cfg_if::cfg_if! {
+    if #[cfg(feature = "futures")] {
+        mod futures;
+        pub use futures::{FutureMaybeUnwindExt, MaybeUnwind};
+    }
+}
+
 use lazy_static::lazy_static;
-use pin_project_lite::pin_project;
-use scoped_tls::scoped_thread_local;
 use std::{
     any::Any,
-    cell::RefCell,
-    panic::{self, AssertUnwindSafe, PanicInfo, UnwindSafe},
-    pin::Pin,
+    cell::Cell,
+    panic::{self, PanicInfo, UnwindSafe},
+    ptr::NonNull,
     sync::RwLock,
 };
 
 type PanicHook = dyn Fn(&PanicInfo) + Send + Sync + 'static;
 
 lazy_static! {
-    static ref OLD_HOOK: RwLock<Option<Box<PanicHook>>> = RwLock::new(None);
+    static ref PREV_HOOK: RwLock<Option<Box<PanicHook>>> = RwLock::new(None);
 }
 
-scoped_thread_local! {
-    static CAPTURED_PANIC_INFO: RefCell<Option<CapturedPanicInfo>>
-}
-
+/// Registers the custom panic hook so that the panic information can be captured.
 #[inline]
 pub fn set_hook() {
-    match OLD_HOOK.write() {
-        Ok(mut old_hook) => {
-            old_hook.get_or_insert_with(panic::take_hook);
+    match PREV_HOOK.write() {
+        Ok(mut prev_hook) => {
+            prev_hook.get_or_insert_with(|| {
+                let prev_hook = panic::take_hook();
+                panic::set_hook(Box::new(maybe_unwind_panic_hook));
+                prev_hook
+            });
         }
         Err(err) => panic!("{}", err),
     }
-    panic::set_hook(Box::new(maybe_unwind_panic_hook));
 }
 
+/// Unregisters the custom panic hook and reset the previous hook.
 #[inline]
 pub fn reset_hook() {
-    if let Ok(mut old_lock) = OLD_HOOK.write() {
-        if let Some(old_hook) = old_lock.take() {
-            panic::set_hook(old_hook);
+    if let Ok(mut prev_hook) = PREV_HOOK.write() {
+        if let Some(prev_hook) = prev_hook.take() {
+            panic::set_hook(prev_hook);
         }
+    }
+}
+
+thread_local! {
+    static CAPTURED_PANIC_INFO: Cell<Option<NonNull<Option<CapturedPanicInfo>>>> = Cell::new(None);
+}
+
+struct SetOnDrop(Option<NonNull<Option<CapturedPanicInfo>>>);
+
+impl Drop for SetOnDrop {
+    fn drop(&mut self) {
+        CAPTURED_PANIC_INFO.with(|captured| {
+            captured.set(self.0.take());
+        });
     }
 }
 
 fn maybe_unwind_panic_hook(info: &PanicInfo) {
-    if !CAPTURED_PANIC_INFO.is_set() {
-        fallback_hook(info);
-        return;
-    }
+    let captured = CAPTURED_PANIC_INFO.with(|captured| captured.replace(None));
+    let _reset = SetOnDrop(captured);
 
-    CAPTURED_PANIC_INFO.with(|captured| match captured.try_borrow_mut() {
-        Ok(mut captured) => {
+    match captured {
+        Some(mut captured) => unsafe {
+            let captured = captured.as_mut();
             captured.replace(CapturedPanicInfo {
+                payload: {
+                    let payload = info.payload();
+                    payload
+                        .downcast_ref::<&str>()
+                        .map(|payload| payload.to_string())
+                        .or_else(|| payload.downcast_ref::<String>().cloned())
+                },
                 message: info.to_string(),
                 file: info.location().map(|loc| loc.file().to_string()),
                 line: info.location().map(|loc| loc.line()),
                 column: info.location().map(|loc| loc.column()),
             });
-        }
-        Err(_) => eprintln!("bug"),
-    })
+        },
+        None => fallback_hook(info),
+    }
 }
 
 fn fallback_hook(info: &PanicInfo) {
-    let old_hook = OLD_HOOK.read().ok();
-    let old_hook = old_hook.as_ref().and_then(|old_hook| old_hook.as_ref());
-    if let Some(old_hook) = old_hook {
-        (old_hook)(info);
+    let prev_hook = PREV_HOOK.read().ok();
+    let prev_hook = prev_hook.as_ref().and_then(|prev_hook| prev_hook.as_ref());
+    if let Some(prev_hook) = prev_hook {
+        (prev_hook)(info);
     } else {
         eprintln!("warning: the original panic hook is not available (this is a bug).");
     }
 }
 
+/// An information about a panic.
 #[derive(Debug)]
 #[non_exhaustive]
 pub struct CapturedPanicInfo {
+    /// The payload associated with the panic.
+    pub payload: Option<String>,
+
+    /// Formatted panic message.
     pub message: String,
+
+    /// The name of the source file from which the panic originated.
     pub file: Option<String>,
+
+    /// The line number from which the panic originated.
     pub line: Option<u32>,
+
+    /// The column from which the panic originated.
     pub column: Option<u32>,
 }
 
+/// The values captured due to a panic.
 #[derive(Debug)]
 #[non_exhaustive]
 pub struct UnwindContext {
+    /// The cause of unwinding panic, caught by `catch_unwind`.
     pub cause: Box<dyn Any + Send + 'static>,
+
+    /// The panic information, caught in the panic hook.
     pub captured: Option<CapturedPanicInfo>,
 }
 
+/// Invokes a closure, capturing the cause of an unwinding panic if one occurs.
+///
+/// In addition, this function also captures the panic information if the custom
+/// panic hook is set. If the panic hook is not set, only the cause of unwinding
+/// panic captured by `catch_unwind` is returned.
+///
+/// See also the documentation of [`CapturedPanicInfo`] for details.
+///
+/// [`CapturedPanicInfo`]: ./struct.CapturedPanicInfo.html
 pub fn maybe_unwind<F, R>(f: F) -> Result<R, UnwindContext>
 where
     F: FnOnce() -> R + UnwindSafe,
 {
-    let mut captured = RefCell::new(None);
-    CAPTURED_PANIC_INFO
-        .set(&captured, || panic::catch_unwind(f))
-        .map_err(|cause| UnwindContext {
-            cause,
-            captured: captured.get_mut().take(),
-        })
-}
+    let mut captured: Option<CapturedPanicInfo> = None;
 
-pin_project! {
-    #[derive(Debug)]
-    #[must_use = "futures do nothing unless you `.await` or poll them"]
-    pub struct MaybeUnwind<T> {
-        #[pin]
-        inner: T,
-    }
-}
+    let res = {
+        let old_info = CAPTURED_PANIC_INFO.with(|tls| {
+            tls.replace(Some(NonNull::from(&mut captured))) //
+        });
+        let _reset = SetOnDrop(old_info);
+        panic::catch_unwind(f)
+    };
 
-impl<F> Future for MaybeUnwind<F>
-where
-    F: Future + UnwindSafe,
-{
-    type Output = Result<F::Output, UnwindContext>;
-
-    fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> Poll<Self::Output> {
-        let me = self.project();
-        maybe_unwind(AssertUnwindSafe(|| me.inner.poll(cx)))?.map(Ok)
-    }
-}
-
-pub trait FutureExt: Future {
-    fn maybe_unwind(self) -> MaybeUnwind<Self>
-    where
-        Self: Sized + UnwindSafe,
-    {
-        MaybeUnwind { inner: self }
-    }
-}
-
-impl<F: Future + ?Sized> FutureExt for F {}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use futures::executor::block_on;
-
-    #[allow(unreachable_code)]
-    #[test]
-    #[should_panic(expected = "explicit panic")]
-    fn smoke_test() {
-        set_hook();
-
-        assert!(block_on(async { "foo" }.maybe_unwind()).is_ok());
-
-        let unwind = block_on(
-            async {
-                panic!("bar");
-                "foo"
-            }
-            .maybe_unwind(),
-        )
-        .unwrap_err();
-
-        assert!(unwind
-            .captured
-            .map_or(false, |captured| captured.message.contains("bar")));
-
-        panic!("explicit panic");
-    }
+    res.map_err(|cause| UnwindContext {
+        cause,
+        captured: captured.take(),
+    })
 }

@@ -1,33 +1,36 @@
-# `maybe-unwind`
+<h1 align="center">
+  <code>maybe-unwind</code>
+</h1>
+<div align="center">
+  <strong>
+    A variant of <a href="https://doc.rust-lang.org/stable/std/panic/fn.catch_unwind.html"><code>catch_unwind</code></a> that also captures the panic information.
+  </strong>
+</div>
 
-A variant of [`catch_unwind`](https://docs.rs/futures/0.3/futures/future/trait.FutureExt.html#method.catch_unwind) that also captures the panic information.
+<br />
 
-The purpose of this library is to provide a utility for capturing the error information from assetion macros in custom test libraries.
+<div align="center">
+  <a href="https://crates.io/crates/maybe-unwind">
+    <img src="https://img.shields.io/crates/v/maybe-unwind.svg?style=flat-square"
+         alt="crates.io"
+    />
+  </a>
+  <a href="https://blog.rust-lang.org/2019/12/19/Rust-1.40.0.html">
+    <img src="https://img.shields.io/badge/rust-1.40.0-gray?style=flat-square"
+         alt="rust toolchain"
+    />
+  </a>
+  <!--
+  <a href="https://docs.rs/mimicaw">
+    <img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square"
+         alt="docs.rs" />
+  </a>
+  -->
+</div>
 
-## Status
+<br />
 
-WIP
-
-## Example
-
-```rust
-use maybe_unwind::FutureExt;
-
-// Replace the global panic handler so that the panic information can be captured.
-let old_hook = maybe_uninit::set_hook();
-
-let res: Result<_, maybe_unwind::UnwindContext> = 
-    do_something_that_may_panic()
-        .maybe_unwind()
-        .await;
-
-if let Err(err) = res {
-    eprintln!("cause: {:?}", err.cause);
-    eprintln!("error_msg: {}", err.message);
-}
-
-std::panic::set_hook(old_hook);
-```
+The main purpose of this library is to provide a utility for capturing the error information from assetion macros in custom test libraries.
 
 ## License
 
@@ -37,3 +40,4 @@ This library is licensed under either of
 * Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
 
 at your option.
+
