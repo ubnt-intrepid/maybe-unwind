@@ -23,7 +23,7 @@ if let Err(unwind) = maybe_unwind(|| do_something()) {
 ```
 !*/
 
-#![doc(html_root_url = "https://docs.rs/maybe-unwind/0.0.1")]
+#![doc(html_root_url = "https://docs.rs/maybe-unwind/0.0.2")]
 #![deny(missing_docs)]
 #![forbid(clippy::todo, clippy::unimplemented)]
 #![cfg_attr(test, deny(warnings))]
@@ -194,10 +194,6 @@ impl Unwind {
 /// In addition, this function also captures the panic information if the custom
 /// panic hook is set. If the panic hook is not set, only the cause of unwinding
 /// panic captured by `catch_unwind` is returned.
-///
-/// See also the documentation of [`OwnedPanicInfo`] for details.
-///
-/// [`OwnedPanicInfo`]: ./struct.OwnedPanicInfo.html
 pub fn maybe_unwind<F, R>(f: F) -> Result<R, Unwind>
 where
     F: FnOnce() -> R + UnwindSafe,
@@ -216,9 +212,4 @@ where
         payload,
         info: info.take(),
     })
-}
-
-#[test]
-fn test_html_root_url() {
-    version_sync::assert_html_root_url_updated!("src/lib.rs");
 }
