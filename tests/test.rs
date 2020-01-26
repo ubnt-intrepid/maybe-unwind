@@ -71,29 +71,76 @@ fn nested2() {
 
 #[cfg(feature = "futures")]
 mod futures {
-    use super::*;
+    use super::ensure_set_hook;
     use futures_executor::block_on;
     use maybe_unwind::FutureMaybeUnwindExt as _;
 
+    #[test]
+    fn never_unwind() {
+        ensure_set_hook();
+        block_on(async {
+            assert!(async { "foo" }.maybe_unwind().await.is_ok());
+        })
+    }
+
     #[allow(unreachable_code)]
     #[test]
-    #[should_panic(expected = "explicit panic")]
-    fn smoke() {
+    fn has_unwind() {
         ensure_set_hook();
-
-        assert!(block_on(async { "foo" }.maybe_unwind()).is_ok());
-
-        let unwind = block_on(
-            async {
+        block_on(async {
+            let unwind = async {
                 panic!("bar");
                 "foo"
             }
-            .maybe_unwind(),
-        )
-        .unwrap_err();
+            .maybe_unwind()
+            .await
+            .unwrap_err();
+            assert_eq!(unwind.payload_str(), "bar");
+            assert!(unwind.file().map_or(false, |file| file.contains(file!())));
+            assert!(unwind.line().is_some());
+            assert!(unwind.column().is_some());
+        })
+    }
 
-        assert!(unwind.payload_str() == "bar");
+    #[allow(unreachable_code)]
+    #[test]
+    fn nested1() {
+        ensure_set_hook();
+        block_on(async {
+            let res = async {
+                async {
+                    panic!("bar");
+                    "baz"
+                }
+                .maybe_unwind()
+                .await
+            }
+            .maybe_unwind()
+            .await;
+            let res = res.unwrap();
+            let unwind = res.unwrap_err();
+            assert_eq!(unwind.payload_str(), "bar");
+        })
+    }
 
-        panic!("explicit panic");
+    #[allow(unreachable_code)]
+    #[test]
+    fn nested2() {
+        ensure_set_hook();
+        block_on(async {
+            let res = async {
+                let _ = async {
+                    panic!("bar");
+                    "baz"
+                }
+                .maybe_unwind()
+                .await;
+                panic!("foo");
+            }
+            .maybe_unwind()
+            .await;
+            let unwind = res.unwrap_err();
+            assert_eq!(unwind.payload_str(), "foo");
+        })
     }
 }
