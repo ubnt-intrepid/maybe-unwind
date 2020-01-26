@@ -24,13 +24,10 @@ maybe_unwind::reset_hook();
 ```
 !*/
 
-cfg_if::cfg_if! {
-    if #[cfg(feature = "futures")] {
-        mod futures;
-        pub use futures::{FutureMaybeUnwindExt, MaybeUnwind};
-    }
-}
+#![cfg_attr(feature = "nightly", feature(backtrace))]
+#![cfg_attr(feature = "nightly", feature(doc_cfg))]
 
+use cfg_if::cfg_if;
 use lazy_static::lazy_static;
 use std::{
     any::Any,
@@ -39,6 +36,16 @@ use std::{
     ptr::NonNull,
     sync::RwLock,
 };
+
+#[cfg(feature = "nightly")]
+use std::backtrace::Backtrace;
+
+cfg_if! {
+    if #[cfg(feature = "futures")] {
+        mod futures;
+        pub use futures::{FutureMaybeUnwindExt, MaybeUnwind};
+    }
+}
 
 type PanicHook = dyn Fn(&PanicInfo) + Send + Sync + 'static;
 
@@ -104,6 +111,8 @@ fn maybe_unwind_panic_hook(info: &PanicInfo) {
                 file: info.location().map(|loc| loc.file().to_string()),
                 line: info.location().map(|loc| loc.line()),
                 column: info.location().map(|loc| loc.column()),
+                #[cfg(feature = "nightly")]
+                backtrace: Backtrace::capture(),
             });
         },
         None => fallback_hook(info),
@@ -122,22 +131,54 @@ fn fallback_hook(info: &PanicInfo) {
 
 /// An information about a panic.
 #[derive(Debug)]
-#[non_exhaustive]
 pub struct CapturedPanicInfo {
-    /// The payload associated with the panic.
-    pub payload: Option<String>,
+    payload: Option<String>,
+    message: String,
+    file: Option<String>,
+    line: Option<u32>,
+    column: Option<u32>,
+    #[cfg(feature = "nightly")]
+    backtrace: Backtrace,
+}
 
-    /// Formatted panic message.
-    pub message: String,
+impl CapturedPanicInfo {
+    /// Return the payload associated with the panic.
+    #[inline]
+    pub fn payload(&self) -> Option<&str> {
+        self.payload.as_deref()
+    }
 
-    /// The name of the source file from which the panic originated.
-    pub file: Option<String>,
+    /// Return the formatted panic message.
+    #[inline]
+    pub fn message(&self) -> &str {
+        self.message.as_str()
+    }
 
-    /// The line number from which the panic originated.
-    pub line: Option<u32>,
+    /// Return the name of the source file from which the panic originated.
+    #[inline]
+    pub fn file(&self) -> Option<&str> {
+        self.file.as_deref()
+    }
 
-    /// The column from which the panic originated.
-    pub column: Option<u32>,
+    /// Return the line number from which the panic originated.
+    #[inline]
+    pub fn line(&self) -> Option<u32> {
+        self.line
+    }
+
+    /// Return the column from which the panic originated.
+    #[inline]
+    pub fn column(&self) -> Option<u32> {
+        self.column
+    }
+
+    /// Return the captured backtrace for the panic.
+    #[cfg(feature = "nightly")]
+    #[doc(cfg(feature = "nightly"))]
+    #[inline]
+    pub fn backtrace(&self) -> &Backtrace {
+        &self.backtrace
+    }
 }
 
 /// The values captured due to a panic.

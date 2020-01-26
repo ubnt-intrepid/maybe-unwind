@@ -27,7 +27,7 @@ fn smoke_test() {
     .unwrap_err();
 
     let captured = unwind.captured.expect("empty capture");
-    assert!(captured.payload.as_ref().map_or(false, |s| s == "bar"));
+    assert!(captured.payload() == Some("bar"));
 
     panic!("explicit panic");
 }
