@@ -10,6 +10,9 @@ edition = "2018"
 repository = "https://github.com/ubnt-intrepid/maybe-unwind.git"
 readme = "README.md"
 
+[package.metadata.docs.rs]
+all-features = true
+
 [dependencies]
 cfg-if = "0.1"
 lazy_static = "1"
