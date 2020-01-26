@@ -6,7 +6,7 @@ use std::sync::Once;
 
 fn ensure_set_hook() {
     static SET_HOOK: Once = Once::new();
-    SET_HOOK.call_once(|| maybe_unwind::set_hook());
+    SET_HOOK.call_once(maybe_unwind::set_hook);
 }
 
 #[allow(unreachable_code)]

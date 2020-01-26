@@ -1,5 +1,5 @@
 /*!
-A variant of [`catch_unwind`] that also captures the panic information.
+A wrapper of [`catch_unwind`] that also captures the panic information.
 
 The main purpose of this library is to provide a utility for capturing
 the error information from assetion macros in custom test libraries.
@@ -24,6 +24,10 @@ maybe_unwind::reset_hook();
 ```
 !*/
 
+#![doc(html_root_url = "https://docs.rs/maybe-unwind/0.0.1")]
+#![deny(missing_docs)]
+#![forbid(clippy::todo, clippy::unimplemented)]
+#![cfg_attr(test, deny(warnings))]
 #![cfg_attr(feature = "nightly", feature(backtrace))]
 #![cfg_attr(feature = "nightly", feature(doc_cfg))]
 
@@ -104,7 +108,7 @@ fn maybe_unwind_panic_hook(info: &PanicInfo) {
                     let payload = info.payload();
                     payload
                         .downcast_ref::<&str>()
-                        .map(|payload| payload.to_string())
+                        .map(|&payload| payload.to_string())
                         .or_else(|| payload.downcast_ref::<String>().cloned())
                 },
                 message: info.to_string(),
@@ -219,4 +223,9 @@ where
         cause,
         captured: captured.take(),
     })
+}
+
+#[test]
+fn test_html_root_url() {
+    version_sync::assert_html_root_url_updated!("src/lib.rs");
 }

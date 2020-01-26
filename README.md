@@ -3,7 +3,7 @@
 </h1>
 <div align="center">
   <strong>
-    A variant of <a href="https://doc.rust-lang.org/stable/std/panic/fn.catch_unwind.html"><code>catch_unwind</code></a> that also captures the panic information.
+    A wrapper of <a href="https://doc.rust-lang.org/stable/std/panic/fn.catch_unwind.html"><code>catch_unwind</code></a> that also captures the panic information.
   </strong>
 </div>
 
@@ -20,12 +20,10 @@
          alt="rust toolchain"
     />
   </a>
-  <!--
-  <a href="https://docs.rs/mimicaw">
+  <a href="https://docs.rs/maybe-unwind">
     <img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square"
          alt="docs.rs" />
   </a>
-  -->
 </div>
 
 <br />
