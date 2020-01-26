@@ -21,12 +21,10 @@ fn has_unwind() {
         "foo"
     })
     .unwrap_err();
-    let captured = unwind.captured.expect("empty capture");
-    assert_eq!(captured.payload(), Some("bar"));
-    assert!(captured.message().contains("bar"));
-    assert!(captured.file().map_or(false, |file| file.contains(file!())));
-    assert!(captured.line().is_some());
-    assert!(captured.column().is_some());
+    assert_eq!(unwind.payload_str(), "bar");
+    assert!(unwind.file().map_or(false, |file| file.contains(file!())));
+    assert!(unwind.line().is_some());
+    assert!(unwind.column().is_some());
 }
 
 #[test]
@@ -59,8 +57,7 @@ mod futures {
         )
         .unwrap_err();
 
-        let captured = unwind.captured.expect("empty capture");
-        assert!(captured.payload() == Some("bar"));
+        assert!(unwind.payload_str() == "bar");
 
         panic!("explicit panic");
     }

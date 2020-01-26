@@ -1,4 +1,4 @@
-use super::{maybe_unwind, UnwindContext};
+use super::{maybe_unwind, Unwind};
 use futures_core::{
     future::Future,
     task::{self, Poll},
@@ -24,7 +24,7 @@ impl<F> Future for MaybeUnwind<F>
 where
     F: Future + UnwindSafe,
 {
-    type Output = Result<F::Output, UnwindContext>;
+    type Output = Result<F::Output, Unwind>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> Poll<Self::Output> {
         let me = self.project();
@@ -49,12 +49,8 @@ pub trait FutureMaybeUnwindExt: Future + Sized {
     /// maybe_unwind::set_hook();
     ///
     /// # futures_executor::block_on(async {
-    /// let res: Result<_, maybe_unwind::UnwindContext> = do_something_async()
-    ///     .maybe_unwind()
-    ///     .await;
+    /// let res = do_something_async().maybe_unwind().await;
     /// # });
-    ///
-    /// maybe_unwind::reset_hook();
     /// # async fn do_something_async() {}
     /// ```
     ///

@@ -13,13 +13,12 @@ use maybe_unwind::maybe_unwind;
 
 maybe_unwind::set_hook();
 
-let res: Result<_, maybe_unwind::UnwindContext> = maybe_unwind(|| do_something());
-if let Err(err) = res {
-    eprintln!("cause: {:?}", err.cause);
-    eprintln!("captured: {:?}", err.captured);
+if let Err(unwind) = maybe_unwind(|| do_something()) {
+    eprintln!("payload = {:?}", unwind.payload());
+    eprintln!("file = {:?}", unwind.file());
+    eprintln!("line = {:?}", unwind.line());
+    eprintln!("column = {:?}", unwind.column());
 }
-
-maybe_unwind::reset_hook();
 # fn do_something() {}
 ```
 !*/
@@ -83,43 +82,35 @@ pub fn reset_hook() {
 }
 
 thread_local! {
-    static CAPTURED_PANIC_INFO: Cell<Option<NonNull<Option<CapturedPanicInfo>>>> = Cell::new(None);
+    static OWNED_PANIC_INFO: Cell<Option<NonNull<Option<OwnedPanicInfo>>>> = Cell::new(None);
 }
 
-struct SetOnDrop(Option<NonNull<Option<CapturedPanicInfo>>>);
+struct SetOnDrop(Option<NonNull<Option<OwnedPanicInfo>>>);
 
 impl Drop for SetOnDrop {
     fn drop(&mut self) {
-        CAPTURED_PANIC_INFO.with(|captured| {
-            captured.set(self.0.take());
+        OWNED_PANIC_INFO.with(|info| {
+            info.set(self.0.take());
         });
     }
 }
 
-fn maybe_unwind_panic_hook(info: &PanicInfo) {
-    let captured = CAPTURED_PANIC_INFO.with(|captured| captured.replace(None));
-    let _reset = SetOnDrop(captured);
+fn maybe_unwind_panic_hook(raw_info: &PanicInfo) {
+    let info = OWNED_PANIC_INFO.with(|info| info.replace(None));
+    let _reset = SetOnDrop(info);
 
-    match captured {
-        Some(mut captured) => unsafe {
-            let captured = captured.as_mut();
-            captured.replace(CapturedPanicInfo {
-                payload: {
-                    let payload = info.payload();
-                    payload
-                        .downcast_ref::<&str>()
-                        .map(|&payload| payload.to_string())
-                        .or_else(|| payload.downcast_ref::<String>().cloned())
-                },
-                message: info.to_string(),
-                file: info.location().map(|loc| loc.file().to_string()),
-                line: info.location().map(|loc| loc.line()),
-                column: info.location().map(|loc| loc.column()),
+    match info {
+        Some(mut info) => unsafe {
+            let info = info.as_mut();
+            info.replace(OwnedPanicInfo {
+                file: raw_info.location().map(|loc| loc.file().to_string()),
+                line: raw_info.location().map(|loc| loc.line()),
+                column: raw_info.location().map(|loc| loc.column()),
                 #[cfg(feature = "nightly")]
                 backtrace: Backtrace::capture(),
             });
         },
-        None => fallback_hook(info),
+        None => fallback_hook(raw_info),
     }
 }
 
@@ -133,11 +124,15 @@ fn fallback_hook(info: &PanicInfo) {
     }
 }
 
-/// An information about a panic.
+/// The captured information about an unwinding panic.
 #[derive(Debug)]
-pub struct CapturedPanicInfo {
-    payload: Option<String>,
-    message: String,
+pub struct Unwind {
+    payload: Box<dyn Any + Send + 'static>,
+    info: Option<OwnedPanicInfo>,
+}
+
+#[derive(Debug)]
+struct OwnedPanicInfo {
     file: Option<String>,
     line: Option<u32>,
     column: Option<u32>,
@@ -145,55 +140,53 @@ pub struct CapturedPanicInfo {
     backtrace: Backtrace,
 }
 
-impl CapturedPanicInfo {
-    /// Return the payload associated with the panic.
+impl Unwind {
+    /// Return the payload associated with the captured panic.
     #[inline]
-    pub fn payload(&self) -> Option<&str> {
-        self.payload.as_deref()
+    pub fn payload(&self) -> &(dyn Any + Send + 'static) {
+        &*self.payload
     }
 
-    /// Return the formatted panic message.
+    /// Return the string representation of the panic payload.
     #[inline]
-    pub fn message(&self) -> &str {
-        self.message.as_str()
+    pub fn payload_str(&self) -> &str {
+        let payload = self.payload();
+        (payload.downcast_ref::<&str>().copied())
+            .or_else(|| payload.downcast_ref::<String>().map(|s| s.as_str()))
+            .unwrap_or_else(|| "Box<dyn Any>")
+    }
+
+    /// Convert itself into a trait object of the panic payload.
+    #[inline]
+    pub fn into_payload(self) -> Box<dyn Any + Send + 'static> {
+        self.payload
     }
 
     /// Return the name of the source file from which the panic originated.
     #[inline]
     pub fn file(&self) -> Option<&str> {
-        self.file.as_deref()
+        self.info.as_ref()?.file.as_deref()
     }
 
     /// Return the line number from which the panic originated.
     #[inline]
     pub fn line(&self) -> Option<u32> {
-        self.line
+        self.info.as_ref()?.line
     }
 
     /// Return the column from which the panic originated.
     #[inline]
     pub fn column(&self) -> Option<u32> {
-        self.column
+        self.info.as_ref()?.column
     }
 
     /// Return the captured backtrace for the panic.
     #[cfg(feature = "nightly")]
     #[doc(cfg(feature = "nightly"))]
     #[inline]
-    pub fn backtrace(&self) -> &Backtrace {
-        &self.backtrace
+    pub fn backtrace(&self) -> Option<&Backtrace> {
+        Some(&self.info.as_ref()?.backtrace)
     }
-}
-
-/// The values captured due to a panic.
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct UnwindContext {
-    /// The cause of unwinding panic, caught by `catch_unwind`.
-    pub cause: Box<dyn Any + Send + 'static>,
-
-    /// The panic information, caught in the panic hook.
-    pub captured: Option<CapturedPanicInfo>,
 }
 
 /// Invokes a closure, capturing the cause of an unwinding panic if one occurs.
@@ -202,26 +195,26 @@ pub struct UnwindContext {
 /// panic hook is set. If the panic hook is not set, only the cause of unwinding
 /// panic captured by `catch_unwind` is returned.
 ///
-/// See also the documentation of [`CapturedPanicInfo`] for details.
+/// See also the documentation of [`OwnedPanicInfo`] for details.
 ///
-/// [`CapturedPanicInfo`]: ./struct.CapturedPanicInfo.html
-pub fn maybe_unwind<F, R>(f: F) -> Result<R, UnwindContext>
+/// [`OwnedPanicInfo`]: ./struct.OwnedPanicInfo.html
+pub fn maybe_unwind<F, R>(f: F) -> Result<R, Unwind>
 where
     F: FnOnce() -> R + UnwindSafe,
 {
-    let mut captured: Option<CapturedPanicInfo> = None;
+    let mut info: Option<OwnedPanicInfo> = None;
 
     let res = {
-        let old_info = CAPTURED_PANIC_INFO.with(|tls| {
-            tls.replace(Some(NonNull::from(&mut captured))) //
+        let old_info = OWNED_PANIC_INFO.with(|tls| {
+            tls.replace(Some(NonNull::from(&mut info))) //
         });
         let _reset = SetOnDrop(old_info);
         panic::catch_unwind(f)
     };
 
-    res.map_err(|cause| UnwindContext {
-        cause,
-        captured: captured.take(),
+    res.map_err(|payload| Unwind {
+        payload,
+        info: info.take(),
     })
 }
 
