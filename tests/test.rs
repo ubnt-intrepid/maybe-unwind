@@ -34,6 +34,36 @@ fn without_wrapper() {
     panic!("explicit panic");
 }
 
+#[allow(unreachable_code)]
+#[test]
+fn nested1() {
+    ensure_set_hook();
+    let res = maybe_unwind(|| {
+        maybe_unwind(|| {
+            panic!("bar");
+            "baz"
+        })
+    });
+    let res = res.unwrap();
+    let unwind = res.unwrap_err();
+    assert_eq!(unwind.payload_str(), "bar");
+}
+
+#[allow(unreachable_code)]
+#[test]
+fn nested2() {
+    ensure_set_hook();
+    let res = maybe_unwind(|| {
+        let _ = maybe_unwind(|| {
+            panic!("bar");
+            "baz"
+        });
+        panic!("foo");
+    });
+    let unwind = res.unwrap_err();
+    assert_eq!(unwind.payload_str(), "foo");
+}
+
 #[cfg(feature = "futures")]
 mod futures {
     use super::*;
