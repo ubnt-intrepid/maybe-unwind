@@ -42,7 +42,7 @@ pub trait FutureMaybeUnwindExt: Future + Sized {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```
     /// # use maybe_unwind::maybe_unwind;
     /// use maybe_unwind::FutureMaybeUnwindExt as _;
     ///

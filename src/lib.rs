@@ -8,7 +8,7 @@ the error information from assetion macros in custom test libraries.
 
 # Example
 
-```no_run
+```
 use maybe_unwind::maybe_unwind;
 
 maybe_unwind::set_hook();
@@ -56,18 +56,39 @@ lazy_static! {
 }
 
 /// Registers the custom panic hook so that the panic information can be captured.
+///
+/// This function saves the current panic hook and replaces with a custom hook that
+/// captures the panic information caused by closures enclosed in [`maybe_unwind`].
+/// If the panic originated outside of `maybe_unwind`, the saved panic hook is
+/// invoked instead.
+///
+/// Note that the panic hook is managed globally and replacing the hook reflects
+/// all threads in the application.
+///
+/// [`maybe_unwind`]: ./fn.maybe_unwind.html
+///
+/// # Panics
+///
+/// This function panics if it is called from a panicking thread or the global state is poisoned.
+///
+/// # Example
+///
+/// ```
+/// use maybe_unwind::{maybe_unwind, set_hook};
+///
+/// set_hook();
+///
+/// let res = maybe_unwind(|| { panic!("oops"); });
+/// assert!(res.is_err());
+/// ```
 #[inline]
 pub fn set_hook() {
-    match PREV_HOOK.write() {
-        Ok(mut prev_hook) => {
-            prev_hook.get_or_insert_with(|| {
-                let prev_hook = panic::take_hook();
-                panic::set_hook(Box::new(maybe_unwind_panic_hook));
-                prev_hook
-            });
-        }
-        Err(err) => panic!("{}", err),
-    }
+    let mut prev_hook = PREV_HOOK.write().unwrap();
+    prev_hook.get_or_insert_with(|| {
+        let prev_hook = panic::take_hook();
+        panic::set_hook(Box::new(maybe_unwind_panic_hook));
+        prev_hook
+    });
 }
 
 /// Unregisters the custom panic hook and reset the previous hook.
