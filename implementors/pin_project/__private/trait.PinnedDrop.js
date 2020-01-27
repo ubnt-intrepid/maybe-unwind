@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["maybe_unwind"] = [{"text":"impl&lt;T&gt; PinnedDrop for <a class=\"struct\" href=\"maybe_unwind/struct.MaybeUnwind.html\" title=\"struct maybe_unwind::MaybeUnwind\">MaybeUnwind</a>&lt;T&gt;","synthetic":false,"types":["maybe_unwind::futures::MaybeUnwind"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
