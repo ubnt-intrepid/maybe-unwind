@@ -102,28 +102,28 @@ pub fn reset_hook() {
 }
 
 thread_local! {
-    static OWNED_PANIC_INFO: Cell<Option<NonNull<Option<OwnedPanicInfo>>>> = Cell::new(None);
+    static CAPTURED: Cell<Option<NonNull<Option<Captured>>>> = Cell::new(None);
 }
 
-struct SetOnDrop(Option<NonNull<Option<OwnedPanicInfo>>>);
+struct SetOnDrop(Option<NonNull<Option<Captured>>>);
 
 impl Drop for SetOnDrop {
     fn drop(&mut self) {
-        OWNED_PANIC_INFO.with(|info| {
-            info.set(self.0.take());
+        CAPTURED.with(|captured| {
+            captured.set(self.0.take());
         });
     }
 }
 
-fn maybe_unwind_panic_hook(raw_info: &PanicInfo) {
-    let info = OWNED_PANIC_INFO.with(|info| info.replace(None));
-    let _reset = SetOnDrop(info);
+fn maybe_unwind_panic_hook(info: &PanicInfo) {
+    let captured = CAPTURED.with(|captured| captured.replace(None));
+    let _reset = SetOnDrop(captured);
 
-    match info {
-        Some(mut info) => unsafe {
-            let info = info.as_mut();
-            info.replace(OwnedPanicInfo {
-                location: raw_info.location().map(|loc| Location {
+    match captured {
+        Some(mut captured) => unsafe {
+            let captured = captured.as_mut();
+            captured.replace(Captured {
+                location: info.location().map(|loc| Location {
                     file: loc.file().to_string(),
                     line: loc.line(),
                     column: loc.column(),
@@ -132,7 +132,7 @@ fn maybe_unwind_panic_hook(raw_info: &PanicInfo) {
                 backtrace: Backtrace::capture(),
             });
         },
-        None => fallback_hook(raw_info),
+        None => fallback_hook(info),
     }
 }
 
@@ -150,11 +150,11 @@ fn fallback_hook(info: &PanicInfo) {
 #[derive(Debug)]
 pub struct Unwind {
     payload: Box<dyn Any + Send + 'static>,
-    info: Option<OwnedPanicInfo>,
+    captured: Option<Captured>,
 }
 
 #[derive(Debug)]
-struct OwnedPanicInfo {
+struct Captured {
     location: Option<Location>,
     #[cfg(feature = "nightly")]
     backtrace: Backtrace,
@@ -185,7 +185,7 @@ impl Unwind {
     /// Return the information about the location from which the panic originated.
     #[inline]
     pub fn location(&self) -> Option<&Location> {
-        self.info.as_ref()?.location.as_ref()
+        self.captured.as_ref()?.location.as_ref()
     }
 
     /// Return the captured backtrace for the panic.
@@ -193,7 +193,7 @@ impl Unwind {
     #[doc(cfg(feature = "nightly"))]
     #[inline]
     pub fn backtrace(&self) -> Option<&Backtrace> {
-        Some(&self.info.as_ref()?.backtrace)
+        Some(&self.captured.as_ref()?.backtrace)
     }
 }
 
@@ -240,11 +240,11 @@ pub fn maybe_unwind<F, R>(f: F) -> Result<R, Unwind>
 where
     F: FnOnce() -> R + UnwindSafe,
 {
-    let mut info: Option<OwnedPanicInfo> = None;
+    let mut captured: Option<Captured> = None;
 
     let res = {
-        let old_info = OWNED_PANIC_INFO.with(|tls| {
-            tls.replace(Some(NonNull::from(&mut info))) //
+        let old_info = CAPTURED.with(|tls| {
+            tls.replace(Some(NonNull::from(&mut captured))) //
         });
         let _reset = SetOnDrop(old_info);
         panic::catch_unwind(f)
@@ -252,6 +252,6 @@ where
 
     res.map_err(|payload| Unwind {
         payload,
-        info: info.take(),
+        captured: captured.take(),
     })
 }
