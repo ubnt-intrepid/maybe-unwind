@@ -1,6 +1,6 @@
 [package]
 name = "maybe-unwind"
-version = "0.0.2"
+version = "0.1.0"
 description = """
 A wrapper of catch_unwind that also captures the panic information.
 """
@@ -9,6 +9,15 @@ license = "MIT OR Apache-2.0"
 edition = "2018"
 repository = "https://github.com/ubnt-intrepid/maybe-unwind.git"
 readme = "README.md"
+
+include = [
+    "/src/**/*.rs",
+    "/tests/**/*.rs",
+    "/Cargo.toml",
+    "/CHANGELOG.md",
+    "/LICENSE*",
+    "/README.md",
+]
 
 [package.metadata.docs.rs]
 all-features = true

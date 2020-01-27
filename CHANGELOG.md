@@ -6,6 +6,16 @@ This format is based on [Keep a Changelog], and this project adheres to [Semanti
 
 ## [Unreleased]
 
+## [0.1.0] (2020-01-27)
+
+### Added
+
+* Add `Location` representing the location information where the panic originated ([f16e17e](https://github.com/ubnt-intrepid/maybe-unwind/commit/f16e17ec66a6f4853b5b28e7dafdb85fb2105023))
+
+### Changed
+
+* Remove `Unwind::{file,line,column}` (use `Unwind::location` instead)
+
 ## [0.0.2] (2020-01-26)
 
 ### Changed
@@ -18,7 +28,8 @@ This format is based on [Keep a Changelog], and this project adheres to [Semanti
 
 <!-- links -->
 
-[Unreleased]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.0.2...HEAD
+[Unreleased]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.0.2...v0.1.0
 [0.0.2]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/ubnt-intrepid/maybe-unwind/tree/v0.0.1
 
