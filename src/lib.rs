@@ -197,6 +197,15 @@ impl Unwind {
     }
 }
 
+impl fmt::Display for Unwind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.location() {
+            Some(location) => write!(f, "[{}] {}", location, self.payload_str()),
+            None => f.write_str(self.payload_str()),
+        }
+    }
+}
+
 /// The information about the location of an unwinding panic.
 #[derive(Debug)]
 pub struct Location {
