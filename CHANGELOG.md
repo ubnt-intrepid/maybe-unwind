@@ -6,6 +6,12 @@ This format is based on [Keep a Changelog], and this project adheres to [Semanti
 
 ## [Unreleased]
 
+## [0.1.1] (2020-01-27)
+
+### Added
+
+* implementation of `fmt::Display` for `Unwind` ([79f1b0e](https://github.com/ubnt-intrepid/maybe-unwind/commit/79f1b0e47237e4b113053fc15120ce0b454dc2ec))
+
 ## [0.1.0] (2020-01-27)
 
 ### Added
@@ -28,7 +34,8 @@ This format is based on [Keep a Changelog], and this project adheres to [Semanti
 
 <!-- links -->
 
-[Unreleased]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.0.2...v0.1.0
 [0.0.2]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/ubnt-intrepid/maybe-unwind/tree/v0.0.1
