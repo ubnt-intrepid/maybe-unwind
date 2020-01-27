@@ -27,9 +27,9 @@ fn has_unwind() {
     })
     .unwrap_err();
     assert_eq!(unwind.payload_str(), "bar");
-    assert!(unwind.file().map_or(false, |file| file.contains(file!())));
-    assert!(unwind.line().is_some());
-    assert!(unwind.column().is_some());
+    assert!(unwind
+        .location()
+        .map_or(false, |loc| loc.file().contains(file!())));
 }
 
 #[test]
@@ -96,9 +96,9 @@ mod futures {
             .await
             .unwrap_err();
             assert_eq!(unwind.payload_str(), "bar");
-            assert!(unwind.file().map_or(false, |file| file.contains(file!())));
-            assert!(unwind.line().is_some());
-            assert!(unwind.column().is_some());
+            assert!(unwind
+                .location()
+                .map_or(false, |loc| loc.file().contains(file!())));
         })
     }
 

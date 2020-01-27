@@ -15,9 +15,7 @@ maybe_unwind::set_hook();
 
 if let Err(unwind) = maybe_unwind(|| do_something()) {
     eprintln!("payload = {:?}", unwind.payload());
-    eprintln!("file = {:?}", unwind.file());
-    eprintln!("line = {:?}", unwind.line());
-    eprintln!("column = {:?}", unwind.column());
+    eprintln!("location = {:?}", unwind.location());
 }
 # fn do_something() {}
 ```
@@ -35,6 +33,7 @@ use lazy_static::lazy_static;
 use std::{
     any::Any,
     cell::Cell,
+    fmt,
     panic::{self, PanicInfo, UnwindSafe},
     ptr::NonNull,
     sync::RwLock,
@@ -103,9 +102,11 @@ fn maybe_unwind_panic_hook(raw_info: &PanicInfo) {
         Some(mut info) => unsafe {
             let info = info.as_mut();
             info.replace(OwnedPanicInfo {
-                file: raw_info.location().map(|loc| loc.file().to_string()),
-                line: raw_info.location().map(|loc| loc.line()),
-                column: raw_info.location().map(|loc| loc.column()),
+                location: raw_info.location().map(|loc| Location {
+                    file: loc.file().to_string(),
+                    line: loc.line(),
+                    column: loc.column(),
+                }),
                 #[cfg(feature = "nightly")]
                 backtrace: Backtrace::capture(),
             });
@@ -133,9 +134,7 @@ pub struct Unwind {
 
 #[derive(Debug)]
 struct OwnedPanicInfo {
-    file: Option<String>,
-    line: Option<u32>,
-    column: Option<u32>,
+    location: Option<Location>,
     #[cfg(feature = "nightly")]
     backtrace: Backtrace,
 }
@@ -162,22 +161,10 @@ impl Unwind {
         self.payload
     }
 
-    /// Return the name of the source file from which the panic originated.
+    /// Return the information about the location from which the panic originated.
     #[inline]
-    pub fn file(&self) -> Option<&str> {
-        self.info.as_ref()?.file.as_deref()
-    }
-
-    /// Return the line number from which the panic originated.
-    #[inline]
-    pub fn line(&self) -> Option<u32> {
-        self.info.as_ref()?.line
-    }
-
-    /// Return the column from which the panic originated.
-    #[inline]
-    pub fn column(&self) -> Option<u32> {
-        self.info.as_ref()?.column
+    pub fn location(&self) -> Option<&Location> {
+        self.info.as_ref()?.location.as_ref()
     }
 
     /// Return the captured backtrace for the panic.
@@ -186,6 +173,40 @@ impl Unwind {
     #[inline]
     pub fn backtrace(&self) -> Option<&Backtrace> {
         Some(&self.info.as_ref()?.backtrace)
+    }
+}
+
+/// The information about the location of an unwinding panic.
+#[derive(Debug)]
+pub struct Location {
+    file: String,
+    line: u32,
+    column: u32,
+}
+
+impl Location {
+    /// Return the name of the source file from which the panic originated.
+    #[inline]
+    pub fn file(&self) -> &str {
+        self.file.as_str()
+    }
+
+    /// Return the line number from which the panic originated.
+    #[inline]
+    pub fn line(&self) -> u32 {
+        self.line
+    }
+
+    /// Return the column from which the panic originated.
+    #[inline]
+    pub fn column(&self) -> u32 {
+        self.column
+    }
+}
+
+impl fmt::Display for Location {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:{}:{}", self.file, self.line, self.column)
     }
 }
 
