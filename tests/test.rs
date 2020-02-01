@@ -1,11 +1,6 @@
 use maybe_unwind::maybe_unwind;
 use std::sync::Once;
 
-#[test]
-fn test_html_root_url() {
-    version_sync::assert_html_root_url_updated!("src/lib.rs");
-}
-
 fn ensure_set_hook() {
     static SET_HOOK: Once = Once::new();
     SET_HOOK.call_once(maybe_unwind::set_hook);
