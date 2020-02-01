@@ -71,6 +71,13 @@ lazy_static! {
 ///
 /// This function panics if it is called from a panicking thread or the global state is poisoned.
 ///
+/// # Data racing
+///
+/// This function may cause a data race if the panic hook is set from the different thread
+/// at the same time. The application **must** ensure that the all dependencies that may
+/// use the custom panic hook set their hooks before calling `set_hook`, and the panic hook
+/// is not changed afterwards.
+///
 /// # Example
 ///
 /// ```
