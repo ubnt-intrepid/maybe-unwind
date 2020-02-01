@@ -264,6 +264,13 @@
 <span id="264">264</span>
 <span id="265">265</span>
 <span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">/*!
 A wrapper of [`catch_unwind`] that also captures the panic information.
@@ -337,6 +344,13 @@ if let Err(unwind) = maybe_unwind(|| do_something()) {
 <span class="doccomment">/// # Panics</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// This function panics if it is called from a panicking thread or the global state is poisoned.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Data racing</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// This function may cause a data race if the panic hook is set from the different thread</span>
+<span class="doccomment">/// at the same time. The application **must** ensure that the all dependencies that may</span>
+<span class="doccomment">/// use the custom panic hook set their hooks before calling `set_hook`, and the panic hook</span>
+<span class="doccomment">/// is not changed afterwards.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Example</span>
 <span class="doccomment">///</span>
