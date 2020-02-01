@@ -197,7 +197,7 @@ impl Unwind {
 
     /// Return the captured backtrace for the panic.
     #[cfg(feature = "nightly")]
-    #[doc(cfg(feature = "nightly"))]
+    #[cfg_attr(feature = "nightly", doc(cfg(feature = "nightly")))]
     #[inline]
     pub fn backtrace(&self) -> Option<&Backtrace> {
         Some(&self.captured.as_ref()?.backtrace)
