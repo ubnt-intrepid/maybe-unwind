@@ -272,6 +272,15 @@
 <span id="272">272</span>
 <span id="273">273</span>
 <span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">/*!
 A wrapper of [`catch_unwind`] that also captures the panic information.
@@ -312,6 +321,7 @@ if let Err(unwind) = maybe_unwind(|| do_something()) {
     <span class="ident">panic</span>::{<span class="self">self</span>, <span class="ident">PanicInfo</span>, <span class="ident">UnwindSafe</span>},
     <span class="ident">ptr</span>::<span class="ident">NonNull</span>,
     <span class="ident">sync</span>::<span class="ident">RwLock</span>,
+    <span class="ident">thread</span>,
 };
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;nightly&quot;</span>)]</span>
@@ -365,6 +375,10 @@ if let Err(unwind) = maybe_unwind(|| do_something()) {
 <span class="doccomment">/// ```</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_hook</span>() {
+    <span class="kw">if</span> <span class="ident">thread</span>::<span class="ident">panicking</span>() {
+        <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;cannot modify the panic hook from a panicking thread&quot;</span>);
+    }
+
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">prev_hook</span> <span class="op">=</span> <span class="ident">PREV_HOOK</span>.<span class="ident">write</span>().<span class="ident">unwrap</span>();
     <span class="ident">prev_hook</span>.<span class="ident">get_or_insert_with</span>(<span class="op">|</span><span class="op">|</span> {
         <span class="kw">let</span> <span class="ident">prev_hook</span> <span class="op">=</span> <span class="ident">panic</span>::<span class="ident">take_hook</span>();
@@ -376,6 +390,10 @@ if let Err(unwind) = maybe_unwind(|| do_something()) {
 <span class="doccomment">/// Unregisters the custom panic hook and reset the previous hook.</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">reset_hook</span>() {
+    <span class="kw">if</span> <span class="ident">thread</span>::<span class="ident">panicking</span>() {
+        <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;cannot modify the panic hook from a panicking thread&quot;</span>);
+    }
+
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="kw-2">mut</span> <span class="ident">prev_hook</span>) <span class="op">=</span> <span class="ident">PREV_HOOK</span>.<span class="ident">write</span>() {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">prev_hook</span>) <span class="op">=</span> <span class="ident">prev_hook</span>.<span class="ident">take</span>() {
             <span class="ident">panic</span>::<span class="ident">set_hook</span>(<span class="ident">prev_hook</span>);
