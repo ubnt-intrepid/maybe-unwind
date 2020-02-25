@@ -59,8 +59,8 @@ lazy_static! {
 ///
 /// This function saves the current panic hook and replaces with a custom hook that
 /// captures the panic information caused by closures enclosed in [`maybe_unwind`].
-/// If the panic originated outside of `maybe_unwind`, the saved panic hook is
-/// invoked instead.
+/// After capturing the panic information, the original panic hook is *always* called
+/// regardless of where the panic occurred.
 ///
 /// Note that the panic hook is managed globally and replacing the hook reflects
 /// all threads in the application.
@@ -126,8 +126,8 @@ fn maybe_unwind_panic_hook(info: &PanicInfo) {
     let captured = CAPTURED.with(|captured| captured.replace(None));
     let _reset = SetOnDrop(captured);
 
-    match captured {
-        Some(mut captured) => unsafe {
+    if let Some(mut captured) = captured {
+        unsafe {
             let captured = captured.as_mut();
             captured.replace(Captured {
                 location: info.location().map(|loc| Location {
@@ -138,9 +138,10 @@ fn maybe_unwind_panic_hook(info: &PanicInfo) {
                 #[cfg(feature = "nightly")]
                 backtrace: Backtrace::capture(),
             });
-        },
-        None => fallback_hook(info),
+        }
     }
+
+    fallback_hook(info);
 }
 
 fn fallback_hook(info: &PanicInfo) {

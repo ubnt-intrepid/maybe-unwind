@@ -2,8 +2,13 @@ use maybe_unwind::maybe_unwind;
 use std::sync::Once;
 
 fn ensure_set_hook() {
+    fn null_hook(_: &std::panic::PanicInfo) {}
+
     static SET_HOOK: Once = Once::new();
-    SET_HOOK.call_once(maybe_unwind::set_hook);
+    SET_HOOK.call_once(|| {
+        std::panic::set_hook(Box::new(null_hook));
+        maybe_unwind::set_hook();
+    });
 }
 
 #[test]
