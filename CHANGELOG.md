@@ -6,6 +6,16 @@ This format is based on [Keep a Changelog], and this project adheres to [Semanti
 
 ## [Unreleased]
 
+## [0.2.0] (2020-02-25)
+
+### Fixed
+
+* check if the thread is panicking before modifying the hook ([9ed3dcc](https://github.com/ubnt-intrepid/maybe-unwind/commit/9ed3dcc7eaea9e01fdd079bce37bbdd78fee305b))
+
+### Breaking Changes
+
+* call the original hook regardless of where the panic occurred ([0e1392f](https://github.com/ubnt-intrepid/maybe-unwind/commit/0e1392fcc516737d6c0d497e655524760d474464))
+
 ## [0.1.2] (2020-02-02)
 
 ### Fixed
@@ -40,7 +50,8 @@ This format is based on [Keep a Changelog], and this project adheres to [Semanti
 
 <!-- links -->
 
-[Unreleased]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.0.2...v0.1.0
