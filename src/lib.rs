@@ -37,6 +37,7 @@ use std::{
     panic::{self, PanicInfo, UnwindSafe},
     ptr::NonNull,
     sync::RwLock,
+    thread,
 };
 
 #[cfg(feature = "nightly")]
@@ -90,6 +91,10 @@ lazy_static! {
 /// ```
 #[inline]
 pub fn set_hook() {
+    if thread::panicking() {
+        panic!("cannot modify the panic hook from a panicking thread");
+    }
+
     let mut prev_hook = PREV_HOOK.write().unwrap();
     prev_hook.get_or_insert_with(|| {
         let prev_hook = panic::take_hook();
@@ -101,6 +106,10 @@ pub fn set_hook() {
 /// Unregisters the custom panic hook and reset the previous hook.
 #[inline]
 pub fn reset_hook() {
+    if thread::panicking() {
+        panic!("cannot modify the panic hook from a panicking thread");
+    }
+
     if let Ok(mut prev_hook) = PREV_HOOK.write() {
         if let Some(prev_hook) = prev_hook.take() {
             panic::set_hook(prev_hook);
