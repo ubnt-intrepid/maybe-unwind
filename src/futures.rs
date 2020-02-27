@@ -1,4 +1,4 @@
-use super::{maybe_unwind, Unwind};
+use crate::unwind::{maybe_unwind, Unwind};
 use futures_core::{
     future::Future,
     task::{self, Poll},
