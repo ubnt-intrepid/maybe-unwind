@@ -64,8 +64,10 @@
 <span id="64">64</span>
 <span id="65">65</span>
 <span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">maybe_unwind</span>, <span class="ident">Unwind</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">unwind</span>::{<span class="ident">maybe_unwind</span>, <span class="ident">Unwind</span>};
 <span class="kw">use</span> <span class="ident">futures_core</span>::{
     <span class="ident">future</span>::<span class="ident">Future</span>,
     <span class="ident">task</span>::{<span class="self">self</span>, <span class="ident">Poll</span>},
@@ -113,7 +115,9 @@
     <span class="doccomment">/// # use maybe_unwind::maybe_unwind;</span>
     <span class="doccomment">/// use maybe_unwind::FutureMaybeUnwindExt as _;</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// maybe_unwind::set_hook();</span>
+    <span class="doccomment">/// std::panic::set_hook(Box::new(|info| {</span>
+    <span class="doccomment">///     maybe_unwind::capture_panic_info(info);</span>
+    <span class="doccomment">/// }));</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # futures_executor::block_on(async {</span>
     <span class="doccomment">/// let res = do_something_async().maybe_unwind().await;</span>
