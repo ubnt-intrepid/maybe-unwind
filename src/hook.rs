@@ -9,6 +9,9 @@ use std::{
     thread,
 };
 
+#[cfg(feature = "nightly")]
+use std::backtrace::Backtrace;
+
 type PanicHook = dyn Fn(&PanicInfo) + Send + Sync + 'static;
 
 lazy_static! {
