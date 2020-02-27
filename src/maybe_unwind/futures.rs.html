@@ -112,7 +112,6 @@
     <span class="doccomment">/// # Example</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # use maybe_unwind::maybe_unwind;</span>
     <span class="doccomment">/// use maybe_unwind::FutureMaybeUnwindExt as _;</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// std::panic::set_hook(Box::new(|info| {</span>
@@ -121,6 +120,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// # futures_executor::block_on(async {</span>
     <span class="doccomment">/// let res = do_something_async().maybe_unwind().await;</span>
+    <span class="doccomment">/// # drop(res);</span>
     <span class="doccomment">/// # });</span>
     <span class="doccomment">/// # async fn do_something_async() {}</span>
     <span class="doccomment">/// ```</span>
