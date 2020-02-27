@@ -26,10 +26,8 @@ if let Err(unwind) = maybe_unwind(|| do_something()) {
 #![doc(html_root_url = "https://docs.rs/maybe-unwind/0.2.0")]
 #![deny(missing_docs)]
 #![forbid(clippy::todo, clippy::unimplemented)]
-#![cfg_attr(test, deny(warnings))]
 #![cfg_attr(feature = "nightly", feature(backtrace))]
 #![cfg_attr(feature = "nightly", feature(doc_cfg))]
-#![doc(test(attr(deny(deprecated))))]
 
 mod hook;
 mod tls;
