@@ -1,5 +1,5 @@
 use crate::{
-    tls::{AccessError, Context},
+    tls::Context,
     unwind::{Captured, Location},
 };
 use lazy_static::lazy_static;
@@ -41,6 +41,7 @@ lazy_static! {
 /// # Example
 ///
 /// ```
+/// # #![allow(deprecated)]
 /// use maybe_unwind::{maybe_unwind, set_hook};
 ///
 /// set_hook();
@@ -48,6 +49,7 @@ lazy_static! {
 /// let res = maybe_unwind(|| { panic!("oops"); });
 /// assert!(res.is_err());
 /// ```
+#[deprecated(since = "0.2.1")]
 #[inline]
 pub fn set_hook() {
     if thread::panicking() {
@@ -58,11 +60,7 @@ pub fn set_hook() {
     prev_hook.get_or_insert_with(|| {
         let prev_hook = panic::take_hook();
         panic::set_hook(Box::new(|info| {
-            if Context::is_set() {
-                if let Err(_access_err) = capture_panic_info(info) {
-                    eprintln!("warning: failed to capture the panic information");
-                }
-            }
+            capture_panic_info(info);
 
             let prev_hook = PREV_HOOK.read().ok();
             let prev_hook = prev_hook.as_ref().and_then(|prev_hook| prev_hook.as_ref());
@@ -77,6 +75,7 @@ pub fn set_hook() {
 }
 
 /// Unregisters the custom panic hook and reset the previous hook.
+#[deprecated(since = "0.2.1")]
 #[inline]
 pub fn reset_hook() {
     if thread::panicking() {
@@ -90,16 +89,49 @@ pub fn reset_hook() {
     }
 }
 
-#[inline(never)]
-pub fn capture_panic_info(info: &PanicInfo) -> Result<(), AccessError> {
+/// Capture the panic information.
+///
+/// The captured values are stored in the thread local context
+/// for passing to the caller of `maybe_unwind`. After capturing
+/// the panic information, this function returns `true`.
+///
+/// If the panic location is outside of the closure passed to
+/// `maybe_unwind`, this function does nothing and just return
+/// `false`.
+///
+/// # Example
+///
+/// ```
+/// use maybe_unwind::{maybe_unwind, capture_panic_info};
+/// use std::panic::{self, PanicInfo};
+///
+/// fn my_hook(info: &PanicInfo) {
+///     let captured = capture_panic_info(info);
+///
+///     if !captured {
+///         println!("{}", info);
+///     }
+/// }
+/// panic::set_hook(Box::new(my_hook));
+///
+/// let res = maybe_unwind(|| { panic!("oops"); });
+/// assert!(res.is_err());
+/// ```
+pub fn capture_panic_info(info: &PanicInfo) -> bool {
+    if !Context::is_set() {
+        return false;
+    }
+
     #[cfg(feature = "nightly")]
     let backtrace = Backtrace::capture();
 
-    Context::try_with(|ctx| {
+    let _ = Context::try_with(|ctx| {
         ctx.captured.replace(Captured {
             location: info.location().map(|loc| Location::from_std(loc)),
             #[cfg(feature = "nightly")]
             backtrace,
         });
-    })
+    });
+
+    true
 }

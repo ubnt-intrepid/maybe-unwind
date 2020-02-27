@@ -1,13 +1,16 @@
+#![deny(deprecated)]
+
 use maybe_unwind::maybe_unwind;
-use std::sync::Once;
+use std::{panic::PanicInfo, sync::Once};
 
 fn ensure_set_hook() {
-    fn null_hook(_: &std::panic::PanicInfo) {}
+    fn test_hook(info: &PanicInfo) {
+        maybe_unwind::capture_panic_info(info);
+    }
 
     static SET_HOOK: Once = Once::new();
     SET_HOOK.call_once(|| {
-        std::panic::set_hook(Box::new(null_hook));
-        maybe_unwind::set_hook();
+        std::panic::set_hook(Box::new(test_hook));
     });
 }
 

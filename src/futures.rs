@@ -46,7 +46,9 @@ pub trait FutureMaybeUnwindExt: Future + Sized {
     /// # use maybe_unwind::maybe_unwind;
     /// use maybe_unwind::FutureMaybeUnwindExt as _;
     ///
-    /// maybe_unwind::set_hook();
+    /// std::panic::set_hook(Box::new(|info| {
+    ///     maybe_unwind::capture_panic_info(info);
+    /// }));
     ///
     /// # futures_executor::block_on(async {
     /// let res = do_something_async().maybe_unwind().await;

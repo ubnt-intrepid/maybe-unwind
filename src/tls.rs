@@ -1,5 +1,5 @@
 use crate::unwind::Captured;
-use std::{cell::Cell, error, fmt, mem, ptr::NonNull};
+use std::{cell::Cell, mem, ptr::NonNull};
 
 pub(crate) struct Context<'a> {
     pub(crate) captured: &'a mut Option<Captured>,
@@ -49,15 +49,4 @@ impl Drop for Guard {
     }
 }
 
-/// Error value that occurs when the context cannot beaccessed
-/// in the panic hook function.
-#[derive(Debug)]
-pub struct AccessError(());
-
-impl fmt::Display for AccessError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("cannot access the context value")
-    }
-}
-
-impl error::Error for AccessError {}
+pub(crate) struct AccessError(());

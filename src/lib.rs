@@ -11,7 +11,9 @@ the error information from assetion macros in custom test libraries.
 ```
 use maybe_unwind::maybe_unwind;
 
-maybe_unwind::set_hook();
+std::panic::set_hook(Box::new(|info| {
+    maybe_unwind::capture_panic_info(info);
+}));
 
 if let Err(unwind) = maybe_unwind(|| do_something()) {
     eprintln!("payload = {:?}", unwind.payload());
@@ -27,15 +29,19 @@ if let Err(unwind) = maybe_unwind(|| do_something()) {
 #![cfg_attr(test, deny(warnings))]
 #![cfg_attr(feature = "nightly", feature(backtrace))]
 #![cfg_attr(feature = "nightly", feature(doc_cfg))]
+#![doc(test(attr(deny(deprecated))))]
 
 mod hook;
 mod tls;
 mod unwind;
 
 pub use crate::{
-    hook::{reset_hook, set_hook},
+    hook::capture_panic_info,
     unwind::{maybe_unwind, Location, Unwind},
 };
+
+#[allow(deprecated)]
+pub use crate::hook::{reset_hook, set_hook};
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "futures")] {
