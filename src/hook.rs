@@ -52,7 +52,10 @@ lazy_static! {
 /// let res = maybe_unwind(|| { panic!("oops"); });
 /// assert!(res.is_err());
 /// ```
-#[deprecated(since = "0.2.1")]
+#[deprecated(
+    since = "0.2.1",
+    note = "this function will be removed in the future version. use `capture_panic_info` in the custom panic hook instead."
+)]
 #[inline]
 pub fn set_hook() {
     if thread::panicking() {
@@ -78,7 +81,10 @@ pub fn set_hook() {
 }
 
 /// Unregisters the custom panic hook and reset the previous hook.
-#[deprecated(since = "0.2.1")]
+#[deprecated(
+    since = "0.2.1",
+    note = "this function will be removed in the future version."
+)]
 #[inline]
 pub fn reset_hook() {
     if thread::panicking() {
