@@ -6,6 +6,16 @@ This format is based on [Keep a Changelog], and this project adheres to [Semanti
 
 ## [Unreleased]
 
+## [0.2.1] (2020-02-28)
+
+### Added
+
+* `capture_panic_info` ([38580e5](https://github.com/ubnt-intrepid/maybe-unwind/commit/38580e5bc75cb1a7b577d60c5146030a3796757d))
+
+### Deprecated
+
+* `set_hook` / `reset_hook` ([38580e5](https://github.com/ubnt-intrepid/maybe-unwind/commit/38580e5bc75cb1a7b577d60c5146030a3796757d))
+
 ## [0.2.0] (2020-02-25)
 
 ### Fixed
@@ -50,7 +60,8 @@ This format is based on [Keep a Changelog], and this project adheres to [Semanti
 
 <!-- links -->
 
-[Unreleased]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.1.0...v0.1.1
