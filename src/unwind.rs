@@ -1,12 +1,9 @@
-use crate::tls::Context;
+use crate::{backtrace::Backtrace, tls::Context};
 use std::{
     any::Any,
     fmt,
     panic::{self, UnwindSafe},
 };
-
-#[cfg(feature = "nightly")]
-use std::backtrace::Backtrace;
 
 /// Invokes a closure, capturing the cause of an unwinding panic if one occurs.
 ///
@@ -40,7 +37,6 @@ pub struct Unwind {
 #[derive(Debug)]
 pub(crate) struct Captured {
     pub(crate) location: Option<Location>,
-    #[cfg(feature = "nightly")]
     pub(crate) backtrace: Backtrace,
 }
 
@@ -73,8 +69,6 @@ impl Unwind {
     }
 
     /// Return the captured backtrace for the panic.
-    #[cfg(feature = "nightly")]
-    #[cfg_attr(feature = "nightly", doc(cfg(feature = "nightly")))]
     #[inline]
     pub fn backtrace(&self) -> Option<&Backtrace> {
         Some(&self.captured.as_ref()?.backtrace)

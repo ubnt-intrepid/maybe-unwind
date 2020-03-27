@@ -1,11 +1,9 @@
 use crate::{
+    backtrace::Backtrace,
     tls::Context,
     unwind::{Captured, Location},
 };
 use std::panic::PanicInfo;
-
-#[cfg(feature = "nightly")]
-use std::backtrace::Backtrace;
 
 /// Capture the panic information.
 ///
@@ -40,13 +38,11 @@ pub fn capture_panic_info(info: &PanicInfo) -> bool {
         return false;
     }
 
-    #[cfg(feature = "nightly")]
     let backtrace = Backtrace::capture();
 
     let _ = Context::try_with(|ctx| {
         ctx.captured.replace(Captured {
             location: info.location().map(|loc| Location::from_std(loc)),
-            #[cfg(feature = "nightly")]
             backtrace,
         });
     });

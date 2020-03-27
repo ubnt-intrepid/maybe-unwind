@@ -148,17 +148,13 @@ mod futures {
     }
 }
 
-#[cfg(feature = "nightly")]
-mod backtrace {
-    use super::*;
-
-    #[test]
-    fn smoke() {
-        ensure_set_hook();
-        let unwind = maybe_unwind(|| {
-            panic!("oops");
-        })
-        .unwrap_err();
-        let _backtrace = unwind.backtrace().unwrap();
-    }
+#[test]
+fn smoke_backtrace() {
+    ensure_set_hook();
+    let unwind = maybe_unwind(|| {
+        panic!("oops");
+    })
+    .unwrap_err();
+    let backtrace = unwind.backtrace().unwrap();
+    eprintln!("{}", backtrace);
 }

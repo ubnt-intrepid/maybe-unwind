@@ -14,6 +14,7 @@ use std::{
 /// [`maybe_unwind`]: ./trait.FutureMaybeUnwindExt.html#method.maybe_unwind
 #[pin_project]
 #[derive(Debug)]
+#[cfg_attr(nightly, doc(cfg(feature = "futures")))]
 #[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct MaybeUnwind<T> {
     #[pin]
@@ -34,6 +35,7 @@ where
 
 /// An extension trait for `Future`s that provides an adaptor for capturing
 /// the unwinding panic information.
+#[cfg_attr(nightly, doc(cfg(feature = "futures")))]
 pub trait FutureMaybeUnwindExt: Future + Sized {
     /// Catches unwinding panics while polling the future.
     ///

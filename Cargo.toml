@@ -10,8 +10,10 @@ license = "MIT OR Apache-2.0"
 edition = "2018"
 repository = "https://github.com/ubnt-intrepid/maybe-unwind.git"
 readme = "README.md"
+build = "build.rs"
 
 include = [
+    "/build.rs",
     "/src/**/*.rs",
     "/tests/**/*.rs",
     "/Cargo.toml",
@@ -23,8 +25,10 @@ include = [
 [package.metadata.docs.rs]
 all-features = true
 
+[build-dependencies]
+version_check = "0.9"
+
 [dependencies]
-cfg-if = "0.1"
 futures-core = { version = "0.3", optional = true }
 pin-project = { version = "0.4", optional = true }
 
@@ -39,4 +43,3 @@ features = [ "precommit-hook", "run-cargo-fmt" ]
 [features]
 default = [ "futures" ]
 futures = [ "futures-core", "pin-project" ]
-nightly = []

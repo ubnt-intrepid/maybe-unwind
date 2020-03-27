@@ -78,13 +78,6 @@ jobs:
         command: test
         args: -- --nocapture
 
-    - name: Run nightly-only tests
-      uses: actions-rs/cargo@v1
-      with:
-        command: test
-        args: --features nightly -- --nocapture
-      if: contains(matrix.conf.toolchain, 'nightly')
-
     - name: Install cargo-tarpaulin
       run: |
         curl -L https://github.com/xd009642/tarpaulin/releases/download/0.10.0/cargo-tarpaulin-0.10.0-travis.tar.gz | tar zxf -
