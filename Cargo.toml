@@ -1,6 +1,7 @@
 [package]
 name = "maybe-unwind"
-version = "0.2.1"
+version = "0.3.0-dev"
+publish = false
 description = """
 A wrapper of catch_unwind that also captures the panic information.
 """
@@ -24,7 +25,6 @@ all-features = true
 
 [dependencies]
 cfg-if = "0.1"
-lazy_static = "1"
 futures-core = { version = "0.3", optional = true }
 pin-project = { version = "0.4", optional = true }
 

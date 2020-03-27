@@ -23,7 +23,7 @@ if let Err(unwind) = maybe_unwind(|| do_something()) {
 ```
 !*/
 
-#![doc(html_root_url = "https://docs.rs/maybe-unwind/0.2.1")]
+#![doc(html_root_url = "https://docs.rs/maybe-unwind/0.3.0-dev")]
 #![deny(missing_docs)]
 #![forbid(clippy::todo, clippy::unimplemented)]
 #![cfg_attr(feature = "nightly", feature(backtrace))]
@@ -37,9 +37,6 @@ pub use crate::{
     hook::capture_panic_info,
     unwind::{maybe_unwind, Location, Unwind},
 };
-
-#[allow(deprecated)]
-pub use crate::hook::{reset_hook, set_hook};
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "futures")] {
