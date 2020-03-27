@@ -126,22 +126,13 @@
 <span id="126">126</span>
 <span id="127">127</span>
 <span id="128">128</span>
-<span id="129">129</span>
-<span id="130">130</span>
-<span id="131">131</span>
-<span id="132">132</span>
-<span id="133">133</span>
-<span id="134">134</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">tls</span>::<span class="ident">Context</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">backtrace</span>::<span class="ident">Backtrace</span>, <span class="ident">tls</span>::<span class="ident">Context</span>};
 <span class="kw">use</span> <span class="ident">std</span>::{
     <span class="ident">any</span>::<span class="ident">Any</span>,
     <span class="ident">fmt</span>,
     <span class="ident">panic</span>::{<span class="self">self</span>, <span class="ident">UnwindSafe</span>},
 };
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;nightly&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">backtrace</span>::<span class="ident">Backtrace</span>;
 
 <span class="doccomment">/// Invokes a closure, capturing the cause of an unwinding panic if one occurs.</span>
 <span class="doccomment">///</span>
@@ -175,7 +166,6 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">Captured</span> {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">location</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Location</span><span class="op">&gt;</span>,
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;nightly&quot;</span>)]</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">backtrace</span>: <span class="ident">Backtrace</span>,
 }
 
@@ -208,8 +198,6 @@
     }
 
     <span class="doccomment">/// Return the captured backtrace for the panic.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;nightly&quot;</span>)]</span>
-    <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;nightly&quot;</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;nightly&quot;</span>)))]</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">backtrace</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Backtrace</span><span class="op">&gt;</span> {
         <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">captured</span>.<span class="ident">as_ref</span>()<span class="question-mark">?</span>.<span class="ident">backtrace</span>)
