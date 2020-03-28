@@ -19,21 +19,21 @@
 <span id="19">19</span>
 <span id="20">20</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">nightly</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">backtrace</span>)]</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">backtrace</span>::<span class="ident">Backtrace</span>;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">nightly</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">backtrace</span>))]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum</span> <span class="ident">Backtrace</span> {}
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">nightly</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">backtrace</span>)]</span>
 <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">capture_backtrace</span> {
     () <span class="op">=</span><span class="op">&gt;</span> {
         <span class="prelude-val">Some</span>(<span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro-nonterminal">backtrace</span>::<span class="ident">Backtrace</span>::<span class="ident">capture</span>())
     };
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">nightly</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">backtrace</span>))]</span>
 <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">capture_backtrace</span> {
     () <span class="op">=</span><span class="op">&gt;</span> {
         <span class="prelude-val">None</span>

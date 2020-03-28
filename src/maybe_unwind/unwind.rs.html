@@ -148,6 +148,9 @@
 <span id="148">148</span>
 <span id="149">149</span>
 <span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">backtrace</span>::<span class="ident">Backtrace</span>, <span class="ident">context</span>::<span class="ident">Context</span>};
 <span class="kw">use</span> <span class="ident">std</span>::{
@@ -223,9 +226,8 @@
 
     <span class="doccomment">/// Get the stack backtrace captured by the panic hook.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// Currently this method is enabled only on the nightly compiler.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">nightly</span>)]</span>
-    <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">nightly</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">nightly</span>)))]</span>
+    <span class="doccomment">/// Currently this method is enabled only if the backtrace is supported.</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">backtrace</span>)]</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">backtrace</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Backtrace</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">captured</span>.<span class="ident">as_ref</span>()<span class="question-mark">?</span>.<span class="ident">backtrace</span>.<span class="ident">as_ref</span>()
@@ -245,11 +247,15 @@
             <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;panicked: {}&quot;</span>, <span class="ident">msg</span>)<span class="question-mark">?</span>;
         }
 
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">nightly</span>)]</span>
+        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">backtrace</span>)]</span>
         {
+            <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">backtrace</span>::<span class="ident">BacktraceStatus</span>;
+
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">backtrace</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">backtrace</span>() {
-                <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;stack backtrace:&quot;</span>)<span class="question-mark">?</span>;
-                <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">backtrace</span>)<span class="question-mark">?</span>;
+                <span class="kw">if</span> <span class="kw">let</span> <span class="ident">BacktraceStatus</span>::<span class="ident">Captured</span> <span class="op">=</span> <span class="ident">backtrace</span>.<span class="ident">status</span>() {
+                    <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;stack backtrace:&quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">backtrace</span>)<span class="question-mark">?</span>;
+                }
             }
         }
 
