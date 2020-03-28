@@ -1,5 +1,5 @@
 use crate::{
-    tls::Context,
+    context::Context,
     unwind::{Captured, Location},
 };
 use std::panic::PanicInfo;
@@ -32,6 +32,7 @@ use std::panic::PanicInfo;
 /// let res = maybe_unwind(|| { panic!("oops"); });
 /// assert!(res.is_err());
 /// ```
+#[inline]
 pub fn capture_panic_info(info: &PanicInfo) -> bool {
     if !Context::is_set() {
         return false;

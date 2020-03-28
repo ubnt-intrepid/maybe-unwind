@@ -31,8 +31,9 @@ if let Err(unwind) = maybe_unwind(|| do_something()) {
 
 #[macro_use]
 mod backtrace;
+#[macro_use]
+mod context;
 mod hook;
-mod tls;
 mod unwind;
 
 pub use crate::{

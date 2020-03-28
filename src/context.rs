@@ -1,5 +1,5 @@
 use crate::unwind::Captured;
-use std::{cell::Cell, mem, ptr::NonNull};
+use std::{cell::Cell, ptr::NonNull};
 
 pub(crate) struct Context<'a> {
     pub(crate) captured: &'a mut Option<Captured>,
@@ -8,18 +8,6 @@ pub(crate) struct Context<'a> {
 impl Context<'_> {
     pub(crate) fn is_set() -> bool {
         TLS_CTX.with(|tls| tls.get().is_some())
-    }
-
-    pub(crate) fn scope<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce() -> R,
-    {
-        unsafe {
-            let ctx_ptr = mem::transmute::<&mut Self, &mut Context<'static>>(self);
-            let old_ctx = TLS_CTX.with(|tls| tls.replace(Some(NonNull::from(ctx_ptr))));
-            let _guard = Guard(old_ctx);
-            f()
-        }
     }
 
     pub(crate) fn try_with<F, R>(f: F) -> Result<R, AccessError>
@@ -36,10 +24,10 @@ impl Context<'_> {
 }
 
 thread_local! {
-    static TLS_CTX: Cell<Option<NonNull<Context<'static>>>> = Cell::new(None);
+    pub(crate) static TLS_CTX: Cell<Option<NonNull<Context<'static>>>> = Cell::new(None);
 }
 
-struct Guard(Option<NonNull<Context<'static>>>);
+pub(crate) struct Guard(pub(crate) Option<NonNull<Context<'static>>>);
 
 impl Drop for Guard {
     fn drop(&mut self) {
@@ -50,3 +38,17 @@ impl Drop for Guard {
 }
 
 pub(crate) struct AccessError(());
+
+macro_rules! with_set_ctx {
+    ($ctx:expr, $body:block) => {{
+        use crate::context::{Context, Guard, TLS_CTX};
+        use std::{mem, ptr::NonNull};
+        let ctx = $ctx;
+        let old_ctx = unsafe {
+            let ctx_ptr = mem::transmute::<_, &mut Context<'static>>(ctx);
+            TLS_CTX.with(|tls| tls.replace(Some(NonNull::from(ctx_ptr))))
+        };
+        let _guard = Guard(old_ctx);
+        $body
+    }};
+}

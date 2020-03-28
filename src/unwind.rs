@@ -1,4 +1,4 @@
-use crate::{backtrace::Backtrace, tls::Context};
+use crate::{backtrace::Backtrace, context::Context};
 use std::{
     any::Any,
     fmt,
@@ -10,16 +10,18 @@ use std::{
 /// In addition, this function also captures the panic information if the custom
 /// panic hook is set. If the panic hook is not set, only the cause of unwinding
 /// panic captured by `catch_unwind` is returned.
+#[inline]
 pub fn maybe_unwind<F, R>(f: F) -> Result<R, Unwind>
 where
     F: FnOnce() -> R + UnwindSafe,
 {
     let mut captured: Option<Captured> = None;
 
-    let res = Context {
+    let mut ctx = Context {
         captured: &mut captured,
-    }
-    .scope(|| panic::catch_unwind(f));
+    };
+
+    let res = with_set_ctx!(&mut ctx, { panic::catch_unwind(f) });
 
     res.map_err(|payload| Unwind {
         payload,
