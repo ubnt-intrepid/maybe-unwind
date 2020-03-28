@@ -37,7 +37,7 @@ pub struct Unwind {
 #[derive(Debug)]
 pub(crate) struct Captured {
     pub(crate) location: Option<Location>,
-    pub(crate) backtrace: Backtrace,
+    pub(crate) backtrace: Option<Backtrace>,
 }
 
 impl Unwind {
@@ -68,19 +68,39 @@ impl Unwind {
         self.captured.as_ref()?.location.as_ref()
     }
 
-    /// Return the captured backtrace for the panic.
+    /// Get the stack backtrace captured by the panic hook.
+    ///
+    /// Currently this method is enabled only on the nightly compiler.
+    #[cfg(nightly)]
+    #[cfg_attr(nightly, doc(cfg(nightly)))]
     #[inline]
     pub fn backtrace(&self) -> Option<&Backtrace> {
-        Some(&self.captured.as_ref()?.backtrace)
+        self.captured.as_ref()?.backtrace.as_ref()
     }
 }
 
 impl fmt::Display for Unwind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.location() {
-            Some(location) => write!(f, "[{}] {}", location, self.payload_str()),
-            None => f.write_str(self.payload_str()),
+        let msg = self.payload_str();
+        if !f.alternate() {
+            return f.write_str(msg);
         }
+
+        if let Some(location) = self.location() {
+            writeln!(f, "panicked at {}: {}", location, msg)?;
+        } else {
+            writeln!(f, "panicked: {}", msg)?;
+        }
+
+        #[cfg(nightly)]
+        {
+            if let Some(backtrace) = self.backtrace() {
+                writeln!(f, "stack backtrace:")?;
+                writeln!(f, "{}", backtrace)?;
+            }
+        }
+
+        Ok(())
     }
 }
 

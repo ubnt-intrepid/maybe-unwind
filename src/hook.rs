@@ -1,5 +1,4 @@
 use crate::{
-    backtrace::Backtrace,
     tls::Context,
     unwind::{Captured, Location},
 };
@@ -38,7 +37,7 @@ pub fn capture_panic_info(info: &PanicInfo) -> bool {
         return false;
     }
 
-    let backtrace = Backtrace::capture();
+    let backtrace = capture_backtrace!();
 
     let _ = Context::try_with(|ctx| {
         ctx.captured.replace(Captured {

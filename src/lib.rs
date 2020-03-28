@@ -29,13 +29,13 @@ if let Err(unwind) = maybe_unwind(|| do_something()) {
 #![cfg_attr(nightly, feature(backtrace))]
 #![cfg_attr(nightly, feature(doc_cfg))]
 
+#[macro_use]
 mod backtrace;
 mod hook;
 mod tls;
 mod unwind;
 
 pub use crate::{
-    backtrace::Backtrace,
     hook::capture_panic_info,
     unwind::{maybe_unwind, Location, Unwind},
 };
