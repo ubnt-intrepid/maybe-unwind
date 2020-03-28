@@ -6,6 +6,21 @@ This format is based on [Keep a Changelog], and this project adheres to [Semanti
 
 ## [Unreleased]
 
+## [0.3.0] (2020-03-28)
+
+### Changed
+
+* The implementation of `std::fmt::Display` for `Unwind`
+  - If the alternate flag is not set, only the panic message is written
+  - The backtrace is written after the panic information if it is enabled
+
+### Removed
+
+* `set_hook` / `reset_hook`
+* `feature = "nightly"`
+  - The backtrace support is automatically enabled by the build script if
+    the compiler supports `#![feature(backtrace)]`
+
 ## [0.2.1] (2020-02-28)
 
 ### Added
@@ -60,7 +75,8 @@ This format is based on [Keep a Changelog], and this project adheres to [Semanti
 
 <!-- links -->
 
-[Unreleased]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.1.1...v0.1.2
