@@ -72,9 +72,8 @@ impl Unwind {
 
     /// Get the stack backtrace captured by the panic hook.
     ///
-    /// Currently this method is enabled only on the nightly compiler.
-    #[cfg(nightly)]
-    #[cfg_attr(nightly, doc(cfg(nightly)))]
+    /// Currently this method is enabled only if the backtrace is supported.
+    #[cfg(backtrace)]
     #[inline]
     pub fn backtrace(&self) -> Option<&Backtrace> {
         self.captured.as_ref()?.backtrace.as_ref()
@@ -94,11 +93,15 @@ impl fmt::Display for Unwind {
             writeln!(f, "panicked: {}", msg)?;
         }
 
-        #[cfg(nightly)]
+        #[cfg(backtrace)]
         {
+            use std::backtrace::BacktraceStatus;
+
             if let Some(backtrace) = self.backtrace() {
-                writeln!(f, "stack backtrace:")?;
-                writeln!(f, "{}", backtrace)?;
+                if let BacktraceStatus::Captured = backtrace.status() {
+                    writeln!(f, "stack backtrace:")?;
+                    writeln!(f, "{}", backtrace)?;
+                }
             }
         }
 

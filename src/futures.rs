@@ -3,7 +3,6 @@ use futures_core::{
     future::Future,
     task::{self, Poll},
 };
-use pin_project::pin_project;
 use std::{
     panic::{AssertUnwindSafe, UnwindSafe},
     pin::Pin,
@@ -12,13 +11,11 @@ use std::{
 /// A future for the [`maybe_unwind`] method.
 ///
 /// [`maybe_unwind`]: ./trait.FutureMaybeUnwindExt.html#method.maybe_unwind
-#[pin_project]
 #[derive(Debug)]
-#[cfg_attr(nightly, doc(cfg(feature = "futures")))]
+#[cfg_attr(docs, doc(cfg(feature = "futures")))]
 #[must_use = "futures do nothing unless you `.await` or poll them"]
-pub struct MaybeUnwind<T> {
-    #[pin]
-    inner: T,
+pub struct MaybeUnwind<F> {
+    inner: F,
 }
 
 impl<F> Future for MaybeUnwind<F>
@@ -28,14 +25,14 @@ where
     type Output = Result<F::Output, Unwind>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> Poll<Self::Output> {
-        let me = self.project();
-        maybe_unwind(AssertUnwindSafe(|| me.inner.poll(cx)))?.map(Ok)
+        let inner = unsafe { self.map_unchecked_mut(|me| &mut me.inner) };
+        maybe_unwind(AssertUnwindSafe(|| inner.poll(cx)))?.map(Ok)
     }
 }
 
 /// An extension trait for `Future`s that provides an adaptor for capturing
 /// the unwinding panic information.
-#[cfg_attr(nightly, doc(cfg(feature = "futures")))]
+#[cfg_attr(docs, doc(cfg(feature = "futures")))]
 pub trait FutureMaybeUnwindExt: Future + Sized {
     /// Catches unwinding panics while polling the future.
     ///

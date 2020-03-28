@@ -23,14 +23,12 @@ include = [
 ]
 
 [package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
 all-features = true
-
-[build-dependencies]
-version_check = "0.9"
+rustflags = [ "--cfg", "docs" ]
 
 [dependencies]
 futures-core = { version = "0.3", optional = true }
-pin-project = { version = "0.4", optional = true }
 
 [dev-dependencies]
 futures-executor = "0.3"
@@ -42,4 +40,4 @@ features = [ "precommit-hook", "run-cargo-fmt" ]
 
 [features]
 default = [ "futures" ]
-futures = [ "futures-core", "pin-project" ]
+futures = [ "futures-core" ]

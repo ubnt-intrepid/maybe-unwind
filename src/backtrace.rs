@@ -1,18 +1,18 @@
-#[cfg(nightly)]
+#[cfg(backtrace)]
 pub(crate) use std::backtrace::Backtrace;
 
-#[cfg(not(nightly))]
+#[cfg(not(backtrace))]
 #[derive(Debug)]
 pub(crate) enum Backtrace {}
 
-#[cfg(nightly)]
+#[cfg(backtrace)]
 macro_rules! capture_backtrace {
     () => {
         Some($crate::backtrace::Backtrace::capture())
     };
 }
 
-#[cfg(not(nightly))]
+#[cfg(not(backtrace))]
 macro_rules! capture_backtrace {
     () => {
         None

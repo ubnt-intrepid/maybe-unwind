@@ -26,8 +26,8 @@ if let Err(unwind) = maybe_unwind(|| do_something()) {
 #![doc(html_root_url = "https://docs.rs/maybe-unwind/0.3.0-dev")]
 #![deny(missing_docs)]
 #![forbid(clippy::todo, clippy::unimplemented)]
-#![cfg_attr(nightly, feature(backtrace))]
-#![cfg_attr(nightly, feature(doc_cfg))]
+#![cfg_attr(backtrace, feature(backtrace))]
+#![cfg_attr(docs, feature(doc_cfg))]
 
 #[macro_use]
 mod backtrace;
