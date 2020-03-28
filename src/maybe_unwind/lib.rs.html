@@ -45,6 +45,7 @@
 <span id="45">45</span>
 <span id="46">46</span>
 <span id="47">47</span>
+<span id="48">48</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">/*!
 A wrapper of [`catch_unwind`] that also captures the panic information.
@@ -77,13 +78,14 @@ if let Err(unwind) = maybe_unwind(|| do_something()) {
 <span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">nightly</span>, <span class="ident">feature</span>(<span class="ident">backtrace</span>))]</span>
 <span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">nightly</span>, <span class="ident">feature</span>(<span class="ident">doc_cfg</span>))]</span>
 
+<span class="attribute">#[<span class="ident">macro_use</span>]</span>
 <span class="kw">mod</span> <span class="ident">backtrace</span>;
+<span class="attribute">#[<span class="ident">macro_use</span>]</span>
+<span class="kw">mod</span> <span class="ident">context</span>;
 <span class="kw">mod</span> <span class="ident">hook</span>;
-<span class="kw">mod</span> <span class="ident">tls</span>;
 <span class="kw">mod</span> <span class="ident">unwind</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">backtrace</span>::<span class="ident">Backtrace</span>,
     <span class="ident">hook</span>::<span class="ident">capture_panic_info</span>,
     <span class="ident">unwind</span>::{<span class="ident">maybe_unwind</span>, <span class="ident">Location</span>, <span class="ident">Unwind</span>},
 };
