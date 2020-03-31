@@ -6,6 +6,10 @@ This format is based on [Keep a Changelog], and this project adheres to [Semanti
 
 ## [Unreleased]
 
+## [0.3.1] (2020-04-01)
+
+* correct docs.rs metadata in Cargo.toml
+
 ## [0.3.0] (2020-03-28)
 
 ### Changed
@@ -75,7 +79,8 @@ This format is based on [Keep a Changelog], and this project adheres to [Semanti
 
 <!-- links -->
 
-[Unreleased]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/ubnt-intrepid/maybe-unwind/compare/v0.1.2...v0.2.0

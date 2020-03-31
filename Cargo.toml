@@ -1,6 +1,6 @@
 [package]
 name = "maybe-unwind"
-version = "0.3.0"
+version = "0.3.1"
 description = """
 A wrapper of catch_unwind that also captures the panic information.
 """

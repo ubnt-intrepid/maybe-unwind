@@ -23,7 +23,7 @@ if let Err(unwind) = maybe_unwind(|| do_something()) {
 ```
 !*/
 
-#![doc(html_root_url = "https://docs.rs/maybe-unwind/0.3.0")]
+#![doc(html_root_url = "https://docs.rs/maybe-unwind/0.3.1")]
 #![deny(missing_docs)]
 #![forbid(clippy::todo, clippy::unimplemented)]
 #![cfg_attr(backtrace, feature(backtrace))]
